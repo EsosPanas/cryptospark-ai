@@ -1,21 +1,27 @@
 import streamlit as st
 import requests
-import time
-from datetime import datetime
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15s")
+st.caption("BTC • ETH • SOL • BNB | Datos en tiempo real")
 
 # ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# ==================== PRECIOS AUTOMÁTICOS (CoinGecko) ====================
+# ==================== BOTÓN GRANDE DE REFRESCAR ====================
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.markdown("### Pulse Vivo - Datos en Vivo")
+with col2:
+    if st.button("🔄 Actualizar Ahora", type="primary", use_container_width=True):
+        st.rerun()
+
+# ==================== PRECIOS CON COINGECKO ====================
 @st.cache_data(ttl=15)
 def get_prices():
     try:
         url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin&price_change_percentage=24h"
-        r = requests.get(url, timeout=8)
+        r = requests.get(url, timeout=10)
         data = r.json()
         prices = {}
         mapping = {'bitcoin': 'BTC', 'ethereum': 'ETH', 'solana': 'SOL', 'binancecoin': 'BNB'}
@@ -30,40 +36,12 @@ def get_prices():
     except:
         return {}
 
-def ia_explica(texto):
-    if not GROQ_API_KEY:
-        return "⚠️ Agrega tu clave Groq en Secrets para activar IA"
-    try:
-        r = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": [{"role": "user", "content": f"Explica en español sencillo y como trader: {texto}"}],
-                "max_tokens": 300
-            },
-            timeout=8
-        )
-        return r.json()["choices"][0]["message"]["content"]
-    except:
-        return "Error temporal en IA. Espera 15s y se actualiza solo."
-
-def defillama_tvl(chain="solana"):
-    try:
-        r = requests.get("https://api.llama.fi/v2/chains", timeout=8)
-        for c in r.json():
-            if c["name"].lower() == chain.lower():
-                return c["tvl"]
-        return 0
-    except:
-        return 0
+prices = get_prices()
 
 # ==================== TABS ====================
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Pulse Vivo", "🔔 Alertas IA", "⛓️ On-Chain", "📰 News", "🌍 Macro", "🤖 AI Analyst"])
 
 with tab1:
-    st.subheader("Pulse Vivo - Datos en Vivo")
-    prices = get_prices()
     cols = st.columns(4)
     symbols = ["BTC", "ETH", "SOL", "BNB"]
     for i, sym in enumerate(symbols):
@@ -92,6 +70,8 @@ with tab2:
                 with st.spinner("IA pensando..."):
                     st.write(ia_explica(a['desc']))
 
+# (las demás pestañas se mantienen iguales - On-Chain, News, Macro, AI Analyst)
+
 with tab3:
     st.subheader("⛓️ On-Chain & Whale Radar")
     col1, col2 = st.columns(2)
@@ -115,8 +95,29 @@ with tab6:
         with st.spinner("IA pensando..."):
             st.success(ia_explica(pregunta))
 
-st.success("✅ CryptoSpark AI 100% tuya y funcionando - Actualización automática cada 15s")
+st.success("✅ CryptoSpark AI 100% tuya y funcionando")
 
-# ==================== AUTO REFRESH ====================
-time.sleep(15)
-st.rerun()
+# Funciones IA y TVL (se mantienen)
+def ia_explica(texto):
+    if not GROQ_API_KEY:
+        return "⚠️ Agrega tu clave Groq en Secrets para activar IA"
+    try:
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": f"Explica en español sencillo y como trader: {texto}"}], "max_tokens": 300},
+            timeout=8
+        )
+        return r.json()["choices"][0]["message"]["content"]
+    except:
+        return "Error temporal en IA"
+
+def defillama_tvl(chain="solana"):
+    try:
+        r = requests.get("https://api.llama.fi/v2/chains", timeout=8)
+        for c in r.json():
+            if c["name"].lower() == chain.lower():
+                return c["tvl"]
+        return 0
+    except:
+        return 0

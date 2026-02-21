@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from datetime import datetime
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
@@ -7,10 +8,6 @@ st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15 seg
 
 # ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
-
-# ==================== BOTÓN GRANDE ====================
-if st.button("🔄 Actualizar Todo Ahora", type="primary", use_container_width=True):
-    st.rerun()
 
 # ==================== PRECIOS COINGECKO ====================
 @st.cache_data(ttl=15)
@@ -50,7 +47,7 @@ def ia_explica(texto):
         )
         return r.json()["choices"][0]["message"]["content"]
     except:
-        return "Error temporal en IA. Espera 15s o pulsa Actualizar"
+        return "Error temporal en IA. Espera 15 segundos."
 
 def defillama_tvl(chain="solana"):
     try:
@@ -94,10 +91,8 @@ with tab2:
 with tab3:
     st.subheader("⛓️ On-Chain & Whale Radar")
     col1, col2 = st.columns(2)
-    with col1:
-        st.metric("TVL Solana", f"${defillama_tvl('solana')/1e9:.1f}B")
-    with col2:
-        st.metric("TVL Ethereum", f"${defillama_tvl('ethereum')/1e9:.1f}B")
+    with col1: st.metric("TVL Solana", f"${defillama_tvl('solana')/1e9:.1f}B")
+    with col2: st.metric("TVL Ethereum", f"${defillama_tvl('ethereum')/1e9:.1f}B")
 
 with tab4:
     st.subheader("📰 Noticias Relevantes")
@@ -116,4 +111,11 @@ with tab6:
         with st.spinner("IA pensando..."):
             st.success(ia_explica(pregunta))
 
-st.success("✅ CryptoSpark AI 100% tuya y funcionando")
+# ==================== ÚLTIMA ACTUALIZACIÓN ====================
+st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
+
+st.success("✅ CryptoSpark AI 100% tuya y funcionando en tiempo real")
+
+# ==================== ACTUALIZACIÓN AUTOMÁTICA ====================
+time.sleep(15)
+st.rerun()

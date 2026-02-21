@@ -1,14 +1,11 @@
 import streamlit as st
 import requests
+import time
 from datetime import datetime
-from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
 st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15 segundos")
-
-# ==================== ACTUALIZACIÓN AUTOMÁTICA ESTABLE ====================
-st_autorefresh(interval=15000, limit=None, key="datarefresh")
 
 # ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
@@ -44,8 +41,8 @@ def ia_explica(texto):
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             json={
                 "model": "llama-3.3-70b-versatile",
-                "messages": [{"role": "user", "content": f"Explica en español sencillo y como trader: {texto}"}],
-                "max_tokens": 300
+                "messages": [{"role": "user", "content": f"Explica en español sencillo y como trader profesional: {texto}"}],
+                "max_tokens": 350
             },
             timeout=8
         )
@@ -80,16 +77,22 @@ with tab1:
 
 with tab2:
     st.subheader("🔔 Centro de Alertas Inteligentes")
+    if st.button("🔄 Refrescar Alertas Ahora", type="primary", use_container_width=True):
+        st.rerun()
+
     alertas = [
-        {"color": "🟢", "title": "OPORTUNIDAD", "desc": "ETH: Whale inflow detectado + funding negativo → setup largo probable"},
-        {"color": "🔴", "title": "RIESGO", "desc": "SOL: Funding alto +0.08% → posible long squeeze en 2-4h"},
-        {"color": "🟡", "title": "INFO", "desc": "Próximo dato CPI USA en 45 min → espera volatilidad"}
+        {"color": "🟢", "title": "OPORTUNIDAD ALTA", "desc": "ETH: Whale inflow +120M + funding negativo → setup largo fuerte probable en 1-4h"},
+        {"color": "🔴", "title": "RIESGO ALTO", "desc": "SOL: Funding +0.085% + OI subiendo → posible long squeeze en próximas horas"},
+        {"color": "🟡", "title": "INFO MACRO", "desc": "CPI USA en 45 min → volatilidad esperada, prepara stops"},
+        {"color": "🟢", "title": "OPORTUNIDAD", "desc": "BTC: Reservas en exchanges bajando → acumulación de whales"},
+        {"color": "🔴", "title": "RIESGO", "desc": "BNB: Funding positivo alto → posible corrección corta"}
     ]
+
     for idx, a in enumerate(alertas):
         with st.expander(f"{a['color']} {a['title']}"):
             st.write(a['desc'])
-            if st.button("🤖 Explicar con IA", key=f"btn_{idx}"):
-                with st.spinner("IA pensando..."):
+            if st.button("🤖 Explicar con IA (detallado)", key=f"btn_{idx}"):
+                with st.spinner("IA analizando escenario..."):
                     st.write(ia_explica(a['desc']))
 
 with tab3:
@@ -115,7 +118,9 @@ with tab6:
         with st.spinner("IA pensando..."):
             st.success(ia_explica(pregunta))
 
-# ==================== ÚLTIMA ACTUALIZACIÓN ====================
 st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
-
 st.success("✅ CryptoSpark AI 100% tuya y funcionando en tiempo real")
+
+# ==================== ACTUALIZACIÓN AUTOMÁTICA ====================
+time.sleep(15)
+st.rerun()

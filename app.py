@@ -1,41 +1,34 @@
 import streamlit as st
-import ccxt
 import requests
 import time
+from datetime import datetime
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15 segundos")
+st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15s")
 
 # ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# ==================== DATOS AUTOMÁTICOS ====================
-@st.cache_resource(ttl=15)
-def get_exchange():
-    return ccxt.binanceusdm({
-        'enableRateLimit': True,
-        'headers': {'User-Agent': 'Mozilla/5.0'},
-        'options': {'defaultType': 'future'}
-    })
-
-exchange = get_exchange()
-
-def get_futures_data(symbol):
+# ==================== PRECIOS AUTOMÁTICOS (CoinGecko) ====================
+@st.cache_data(ttl=15)
+def get_prices():
     try:
-        ticker = exchange.fetch_ticker(f"{symbol}/USDT:USDT")
-        try:
-            funding = exchange.fetch_funding_rate(f"{symbol}/USDT:USDT")['fundingRate'] * 100
-        except:
-            funding = 0.0
-        return {
-            "price": ticker['last'],
-            "change": ticker['percentage'],
-            "funding": funding,
-            "oi": ticker.get('info', {}).get('openInterest', 0)
-        }
+        url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin&price_change_percentage=24h"
+        r = requests.get(url, timeout=8)
+        data = r.json()
+        prices = {}
+        mapping = {'bitcoin': 'BTC', 'ethereum': 'ETH', 'solana': 'SOL', 'binancecoin': 'BNB'}
+        for coin in data:
+            sym = mapping.get(coin['id'])
+            if sym:
+                prices[sym] = {
+                    "price": coin['current_price'],
+                    "change": coin['price_change_percentage_24h']
+                }
+        return prices
     except:
-        return {"price": 0, "change": 0, "funding": 0, "oi": 0}
+        return {}
 
 def ia_explica(texto):
     if not GROQ_API_KEY:
@@ -53,7 +46,7 @@ def ia_explica(texto):
         )
         return r.json()["choices"][0]["message"]["content"]
     except:
-        return "Error temporal en IA. Espera 15 segundos y se actualiza solo."
+        return "Error temporal en IA. Espera 15s y se actualiza solo."
 
 def defillama_tvl(chain="solana"):
     try:
@@ -70,10 +63,11 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Pulse Vivo", "🔔 Alertas I
 
 with tab1:
     st.subheader("Pulse Vivo - Datos en Vivo")
+    prices = get_prices()
     cols = st.columns(4)
     symbols = ["BTC", "ETH", "SOL", "BNB"]
     for i, sym in enumerate(symbols):
-        data = get_futures_data(sym)
+        data = prices.get(sym, {"price": 0, "change": 0})
         with cols[i]:
             if data['price'] > 0:
                 st.metric(
@@ -81,10 +75,8 @@ with tab1:
                     f"${data['price']:,.0f}",
                     f"{data['change']:+.2f}%"
                 )
-                st.caption(f"Funding: {data['funding']:+.3f}% | OI: {int(data['oi']):,}")
             else:
                 st.metric(f"{sym}", "Cargando...", "")
-                st.caption("Espera 15 segundos... se actualiza solo")
 
 with tab2:
     st.subheader("🔔 Centro de Alertas Inteligentes")
@@ -125,6 +117,6 @@ with tab6:
 
 st.success("✅ CryptoSpark AI 100% tuya y funcionando - Actualización automática cada 15s")
 
-# ==================== ACTUALIZACIÓN AUTOMÁTICA ====================
+# ==================== AUTO REFRESH ====================
 time.sleep(15)
 st.rerun()

@@ -1,11 +1,14 @@
 import streamlit as st
 import requests
-import time
 from datetime import datetime
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
 st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15 segundos")
+
+# ==================== ACTUALIZACIÓN AUTOMÁTICA ESTABLE ====================
+st_autorefresh(interval=15000, limit=None, key="datarefresh")
 
 # ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
@@ -116,7 +119,3 @@ with tab6:
 st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
 
 st.success("✅ CryptoSpark AI 100% tuya y funcionando en tiempo real")
-
-# ==================== ACTUALIZACIÓN AUTOMÁTICA ====================
-time.sleep(15)
-st.rerun()

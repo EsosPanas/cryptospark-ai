@@ -10,7 +10,7 @@ st.caption("BTC • ETH • SOL • BNB | Se actualiza sola cada 15 segundos")
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# ====================== FUNCIONES PRINCIPALES ======================
+# ====================== FUNCIONES ======================
 @st.cache_data(ttl=15)
 def get_prices():
     try:
@@ -30,7 +30,7 @@ def get_prices():
     except:
         return {}
 
-@st.cache_data(ttl=300)  # 5 minutos para gráficos
+@st.cache_data(ttl=300)
 def get_historical_prices(coin_id="bitcoin", days=7):
     try:
         url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days={days}"
@@ -230,7 +230,7 @@ with tab5:
     st.write("• **FOMC Minutes** → mañana 14:00 UTC")
     st.write("• **NFP (Empleo USA)** → viernes 8:30 UTC")
 
-# ====================== TAB AI ANALYST (MEJORADO) ======================
+# ====================== TAB AI ANALYST (VERSIÓN FINAL) ======================
 with tab6:
     st.subheader("🤖 AI Analyst")
     st.caption("Tu asistente personal con datos 100% en tiempo real")
@@ -308,51 +308,4 @@ st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
 st.success("✅ CryptoSpark AI 100% tuya y funcionando en tiempo real")
 
 time.sleep(15)
-st.rerun()Cargando gráfico...")
-
-    st.markdown("---")
-
-    # ───────────────────────────────────────
-    # Botones rápidos MEJORADOS
-    # ───────────────────────────────────────
-    st.write("**Preguntas rápidas con datos actuales**")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔮 Escenario BTC esta semana", use_container_width=True):
-            process_ai_question("¿Qué escenario veo para BTC esta semana? Precio actual y niveles clave.")
-        if st.button("📉 Funding actual de SOL", use_container_width=True):
-            process_ai_question("Analiza el funding rate actual de SOL y posibles squeezes.")
-        if st.button("🟢 ¿Entrar largo en ETH ahora?", use_container_width=True):
-            process_ai_question("¿Debo entrar largo en ETH ahora? Dame pros, contras, stop-loss y take-profit.")
-
-    with col2:
-        if st.button("💥 Impacto del CPI en Bitcoin", use_container_width=True):
-            process_ai_question("Impacto del CPI reciente en Bitcoin y niveles clave.")
-        if st.button("🐳 Whales en BNB ahora", use_container_width=True):
-            process_ai_question("¿Qué están haciendo las whales con BNB en este momento?")
-        if st.button("⚡ Estrategia SOL próximas 48h", use_container_width=True):
-            process_ai_question("Estrategia clara para SOL en las próximas 48h con stop y target.")
-
-    # Pregunta manual
-    pregunta = st.text_input("O escribe tu propia pregunta:", placeholder="Ej: ¿Qué pasa si el DXY sube fuerte?")
-    if st.button("Preguntar", type="primary") and pregunta:
-        process_ai_question(pregunta)
-
-    # ───────────────────────────────────────
-    # Historial con Snapshot arriba de CADA respuesta
-    # ───────────────────────────────────────
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
-    for item in st.session_state.chat_history:
-        if item[0] == "Tú":
-            st.markdown(f"**Tú:** {item[1]}")
-        else:
-            # Snapshot visible arriba de la respuesta
-            with st.expander("📊 Snapshot del mercado usado en esta respuesta", expanded=True):
-                st.markdown(get_market_snapshot_text())
-            st.markdown(f"**🤖 AI Analyst:** {item[1]}")
-
-    if st.button("🗑️ Limpiar historial"):
-        st.session_state.chat_history = []
-        st.rerun()
+st.rerun()

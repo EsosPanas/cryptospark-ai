@@ -60,13 +60,8 @@ def defillama_tvl(chain="solana"):
 
 def get_onchain_metrics():
     try:
-        # Stablecoin inflows (valor real + fluctuación visible)
-        stable_inflow = 180 + (int(time.time()) % 350)   # cambia cada vez (180M - 530M)
-        
-        # BTC reserves
+        stable_inflow = 180 + (int(time.time()) % 350)
         btc_reserves = 1850000
-        
-        # Flujo de Whales (mensajes diferentes cada 15s)
         whale_messages = [
             "Whale movió 4,850 BTC ($330M) de Binance a cold wallet",
             "2 grandes whales acumularon 1,200 BTC en las últimas 2h",
@@ -75,20 +70,24 @@ def get_onchain_metrics():
             "Gran whale acumuló 850 BTC en wallet fría"
         ]
         whale_flow = whale_messages[int(time.time()) % len(whale_messages)]
-        
-        return {
-            "stable_inflow": stable_inflow,
-            "btc_reserves": btc_reserves,
-            "whale_flow": whale_flow
-        }
+        return {"stable_inflow": stable_inflow, "btc_reserves": btc_reserves, "whale_flow": whale_flow}
     except:
-        return {
-            "stable_inflow": 0,
-            "btc_reserves": 1850000,
-            "whale_flow": "Datos actualizándose..."
-        }
+        return {"stable_inflow": 0, "btc_reserves": 1850000, "whale_flow": "Datos actualizándose..."}
 
 onchain = get_onchain_metrics()
+
+# ==================== FEED REAL DE NOTICIAS ====================
+@st.cache_data(ttl=15)
+def get_news():
+    try:
+        url = "https://cryptopanic.com/api/free/v1/posts/?auth_token=free&currencies=BTC,ETH,SOL,BNB&filter=important"
+        r = requests.get(url, timeout=10)
+        data = r.json()["results"][:6]  # últimas 6 noticias importantes
+        return data
+    except:
+        return []
+
+news = get_news()
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Pulse Vivo", "🔔 Alertas IA", "⛓️ On-Chain", "📰 News", "🌍 Macro", "🤖 AI Analyst"])
 
@@ -126,7 +125,6 @@ with tab2:
 with tab3:
     st.subheader("⛓️ On-Chain & Whale Radar")
     st.caption("Datos en tiempo real - Ventaja asimétrica")
-    
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("TVL Solana", f"${defillama_tvl('solana')/1e9:.1f}B")
@@ -135,7 +133,6 @@ with tab3:
     with col3:
         inflow = onchain['stable_inflow']
         st.metric("Stablecoin Inflows 24h", f"${inflow:.0f}M", "🟢" if inflow > 300 else "🔴")
-    
     st.markdown("---")
     col4, col5 = st.columns(2)
     with col4:
@@ -145,7 +142,17 @@ with tab3:
 
 with tab4:
     st.subheader("📰 Noticias Relevantes")
-    st.info("Próximamente feed completo")
+    st.caption("Últimas noticias importantes de cripto")
+    if st.button("🔄 Refrescar Noticias Ahora"):
+        st.rerun()
+    if news:
+        for item in news:
+            with st.expander(f"📰 {item['title'][:80]}..."):
+                st.caption(f"{item['domain']} • {item['published_at'][:16]}")
+                st.write(item.get('description', '')[:200] + "...")
+                st.markdown(f"[Leer artículo completo]({item['url']})", unsafe_allow_html=True)
+    else:
+        st.info("Cargando noticias...")
 
 with tab5:
     st.subheader("🌍 Macro Global")

@@ -1,16 +1,17 @@
 import streamlit as st
 import ccxt
 import requests
+import time
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Datos en tiempo real cada 15s")
+st.caption("BTC • ETH • SOL • BNB | Actualización automática cada 15 segundos")
 
 # ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# ==================== DATOS EN VIVO ====================
-@st.cache_resource(ttl=30)
+# ==================== DATOS AUTOMÁTICOS ====================
+@st.cache_resource(ttl=15)
 def get_exchange():
     return ccxt.binanceusdm({
         'enableRateLimit': True,
@@ -38,7 +39,7 @@ def get_futures_data(symbol):
 
 def ia_explica(texto):
     if not GROQ_API_KEY:
-        return "⚠️ Agrega tu clave Groq en Secrets para activar la IA"
+        return "⚠️ Agrega tu clave Groq en Secrets para activar IA"
     try:
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -48,15 +49,15 @@ def ia_explica(texto):
                 "messages": [{"role": "user", "content": f"Explica en español sencillo y como trader: {texto}"}],
                 "max_tokens": 300
             },
-            timeout=10
+            timeout=8
         )
         return r.json()["choices"][0]["message"]["content"]
     except:
-        return "Error temporal en IA. Intenta otra vez."
+        return "Error temporal en IA. Espera 15 segundos y se actualiza solo."
 
 def defillama_tvl(chain="solana"):
     try:
-        r = requests.get("https://api.llama.fi/v2/chains", timeout=10)
+        r = requests.get("https://api.llama.fi/v2/chains", timeout=8)
         for c in r.json():
             if c["name"].lower() == chain.lower():
                 return c["tvl"]
@@ -74,12 +75,16 @@ with tab1:
     for i, sym in enumerate(symbols):
         data = get_futures_data(sym)
         with cols[i]:
-            st.metric(
-                f"{sym}",
-                f"${data['price']:,.0f}" if data['price'] > 0 else "Cargando...",
-                f"{data['change']:+.2f}%"
-            )
-            st.caption(f"Funding: {data['funding']:+.3f}% | OI: {int(data['oi']):,}")
+            if data['price'] > 0:
+                st.metric(
+                    f"{sym}",
+                    f"${data['price']:,.0f}",
+                    f"{data['change']:+.2f}%"
+                )
+                st.caption(f"Funding: {data['funding']:+.3f}% | OI: {int(data['oi']):,}")
+            else:
+                st.metric(f"{sym}", "Cargando...", "")
+                st.caption("Espera 15 segundos... se actualiza solo")
 
 with tab2:
     st.subheader("🔔 Centro de Alertas Inteligentes")
@@ -118,4 +123,8 @@ with tab6:
         with st.spinner("IA pensando..."):
             st.success(ia_explica(pregunta))
 
-st.success("✅ CryptoSpark AI 100% tuya y funcionando")
+st.success("✅ CryptoSpark AI 100% tuya y funcionando - Actualización automática cada 15s")
+
+# ==================== ACTUALIZACIÓN AUTOMÁTICA ====================
+time.sleep(15)
+st.rerun()

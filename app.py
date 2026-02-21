@@ -33,21 +33,53 @@ prices = get_prices()
 def ia_explica(texto):
     if not GROQ_API_KEY:
         return "⚠️ Agrega tu clave Groq en Secrets para activar IA"
+    
+    # === Obtenemos datos EN VIVO (ya los tienes en tu app) ===
+    prices = get_prices()
+    onchain = get_onchain_metrics()
+    
+    # Construimos el contexto actualizado
+    market_snapshot = f"""
+DATOS DE MERCADO EN TIEMPO REAL (actualizado hace segundos):
+• BTC: ${prices.get('BTC', {}).get('price', 0):,.2f}  ({prices.get('BTC', {}).get('change', 0):+.2f}%)
+• ETH: ${prices.get('ETH', {}).get('price', 0):,.2f}  ({prices.get('ETH', {}).get('change', 0):+.2f}%)
+• SOL: ${prices.get('SOL', {}).get('price', 0):,.2f}  ({prices.get('SOL', {}).get('change', 0):+.2f}%)
+• BNB: ${prices.get('BNB', {}).get('price', 0):,.2f}  ({prices.get('BNB', {}).get('change', 0):+.2f}%)
+
+On-Chain:
+• Stablecoin inflows 24h: ${onchain['stable_inflow']:,}M
+• BTC reserves en exchanges: {onchain['btc_reserves']/1000:.0f}K BTC
+• Último movimiento whales: {onchain['whale_flow']}
+
+Macro: CPI USA ya pasó (o está cerca), DXY y yields se actualizan cada 15s.
+"""
+
+    prompt_completo = f"""
+Eres un trader profesional experimentado en futuros de cripto con +10 años.
+Usa SIEMPRE los datos de mercado que te doy arriba. Nunca uses precios antiguos.
+
+{market_snapshot}
+
+Responde en español, sé detallado, da escenarios reales, niveles clave, stop-loss y take-profit cuando corresponda.
+Pregunta del usuario: {texto}
+"""
+
     try:
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             json={
                 "model": "llama-3.3-70b-versatile",
-                "messages": [{"role": "user", "content": f"Responde como trader profesional experimentado en futuros de cripto. Sé detallado, da escenarios, posibles stop-loss y take-profit cuando corresponda. Respuesta en español: {texto}"}],
-                "max_tokens": 500
+                "messages": [{"role": "user", "content": prompt_completo}],
+                "max_tokens": 900,
+                "temperature": 0.7
             },
-            timeout=12
+            timeout=15
         )
-        return r.json()["choices"][0]["message"]["content"]
-    except:
-        return "Error temporal en IA. Espera 15 segundos o vuelve a preguntar."
-
+        respuesta = r.json()["choices"][0]["message"]["content"]
+        return respuesta
+    except Exception as e:
+        return f"Error temporal en IA ({str(e)[:80]}). Intenta de nuevo en 10 segundos."
 def defillama_tvl(chain="solana"):
     try:
         r = requests.get("https://api.llama.fi/v2/chains", timeout=8)

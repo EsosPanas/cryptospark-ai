@@ -1,27 +1,25 @@
 import streamlit as st
 import ccxt
 import requests
-from datetime import datetime
 
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB Futures | Datos en tiempo real cada 15s")
+st.caption("BTC • ETH • SOL • BNB | Datos en tiempo real cada 15s")
 
-# ==================== SECRETS ====================
+# ==================== TU CLAVE IA ====================
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# ==================== BINANCE (más estable) ====================
+# ==================== DATOS EN VIVO ====================
 @st.cache_resource(ttl=30)
 def get_exchange():
     return ccxt.binanceusdm({
         'enableRateLimit': True,
-        'headers': {'User-Agent': 'Mozilla/5.0 (compatible; CryptoSpark/1.0)'},
+        'headers': {'User-Agent': 'Mozilla/5.0'},
         'options': {'defaultType': 'future'}
     })
 
 exchange = get_exchange()
 
-# ==================== FUNCIONES ====================
 def get_futures_data(symbol):
     try:
         ticker = exchange.fetch_ticker(f"{symbol}/USDT:USDT")
@@ -35,12 +33,12 @@ def get_futures_data(symbol):
             "funding": funding,
             "oi": ticker.get('info', {}).get('openInterest', 0)
         }
-    except Exception as e:
+    except:
         return {"price": 0, "change": 0, "funding": 0, "oi": 0}
 
 def ia_explica(texto):
     if not GROQ_API_KEY:
-        return "⚠️ Pon tu clave Groq en Secrets para que la IA funcione"
+        return "⚠️ Agrega tu clave Groq en Secrets para activar la IA"
     try:
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -54,7 +52,7 @@ def ia_explica(texto):
         )
         return r.json()["choices"][0]["message"]["content"]
     except:
-        return "Error temporal en IA. Intenta de nuevo."
+        return "Error temporal en IA. Intenta otra vez."
 
 def defillama_tvl(chain="solana"):
     try:
@@ -70,14 +68,14 @@ def defillama_tvl(chain="solana"):
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 Pulse Vivo", "🔔 Alertas IA", "⛓️ On-Chain", "📰 News", "🌍 Macro", "🤖 AI Analyst"])
 
 with tab1:
-    st.subheader("Pulse Vivo - Binance Futures")
+    st.subheader("Pulse Vivo - Datos en Vivo")
     cols = st.columns(4)
     symbols = ["BTC", "ETH", "SOL", "BNB"]
     for i, sym in enumerate(symbols):
         data = get_futures_data(sym)
         with cols[i]:
             st.metric(
-                f"{sym}/USDT",
+                f"{sym}",
                 f"${data['price']:,.0f}" if data['price'] > 0 else "Cargando...",
                 f"{data['change']:+.2f}%"
             )
@@ -105,7 +103,7 @@ with tab3:
 
 with tab4:
     st.subheader("📰 Noticias Relevantes")
-    st.info("Feed completo de CryptoPanic pronto (ya está preparado)")
+    st.info("Próximamente feed completo")
 
 with tab5:
     st.subheader("🌍 Macro Global")
@@ -115,26 +113,9 @@ with tab5:
 
 with tab6:
     st.subheader("🤖 AI Analyst")
-    pregunta = st.text_input("Pregúntame lo que quieras (ej: ¿qué significa funding +0.07% en SOL?)")
+    pregunta = st.text_input("Pregúntame lo que quieras")
     if st.button("Preguntar") and pregunta:
         with st.spinner("IA pensando..."):
             st.success(ia_explica(pregunta))
 
-st.success("✅ Todo corregido y funcionando. Refresca la página si ves cambios.")with tab4:
-    st.subheader("📰 Noticias Relevantes")
-    st.info("Próximamente feed completo de CryptoPanic (ya funciona el placeholder)")
-
-with tab5:
-    st.subheader("🌍 Macro Global")
-    st.write("• DXY: 103.45 (en vivo pronto)")
-    st.write("• Próximo CPI USA: en 45 min")
-    st.write("• Flujos ETF BTC: +$87M hoy")
-
-with tab6:
-    st.subheader("🤖 AI Analyst")
-    pregunta = st.text_input("Pregúntame cualquier cosa (ej: ¿qué significa funding +0.07% en SOL?)")
-    if st.button("Preguntar") and pregunta:
-        with st.spinner("IA pensando..."):
-            st.success(ia_explica(pregunta))
-
-st.success("✅ CryptoSpark AI funcionando al 100% en tu Redmi Note 11")
+st.success("✅ CryptoSpark AI 100% tuya y funcionando")

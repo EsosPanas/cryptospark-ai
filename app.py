@@ -170,34 +170,73 @@ with tab5:
 with tab6:
     st.subheader("🤖 AI Analyst")
     st.caption("Tu asistente personal de trading - Pregunta lo que quieras")
+
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+
+    # Botones rápidos (ahora funcionan al instante)
     col1, col2 = st.columns(2)
     with col1:
         if st.button("¿Qué escenario veo para BTC esta semana?"):
-            pregunta = "¿Qué escenario veo para BTC esta semana?"
-        elif st.button("Analiza el funding actual de SOL"):
-            pregunta = "Analiza el funding actual de SOL y posibles squeezes"
-        elif st.button("¿Debo entrar largo en ETH ahora?"):
-            pregunta = "¿Debo entrar largo en ETH ahora? Dame pros y contras"
+            q = "¿Qué escenario veo para BTC esta semana?"
+            st.session_state.chat_history.append(("Tú", q))
+            with st.spinner("IA pensando como trader pro..."):
+                respuesta = ia_explica(q)
+                st.session_state.chat_history.append(("AI", respuesta))
+            st.rerun()
+        if st.button("Analiza el funding actual de SOL"):
+            q = "Analiza el funding actual de SOL y posibles squeezes"
+            st.session_state.chat_history.append(("Tú", q))
+            with st.spinner("IA pensando como trader pro..."):
+                respuesta = ia_explica(q)
+                st.session_state.chat_history.append(("AI", respuesta))
+            st.rerun()
+        if st.button("¿Debo entrar largo en ETH ahora?"):
+            q = "¿Debo entrar largo en ETH ahora? Dame pros y contras"
+            st.session_state.chat_history.append(("Tú", q))
+            with st.spinner("IA pensando como trader pro..."):
+                respuesta = ia_explica(q)
+                st.session_state.chat_history.append(("AI", respuesta))
+            st.rerun()
     with col2:
         if st.button("Impacto del próximo CPI en Bitcoin"):
-            pregunta = "Impacto del próximo CPI en Bitcoin y niveles clave"
-        elif st.button("¿Qué está pasando con las whales en BNB?"):
-            pregunta = "¿Qué está pasando con las whales en BNB?"
-        elif st.button("Estrategia para SOL en las próximas 48h"):
-            pregunta = "Estrategia para SOL en las próximas 48h con stop y target"
+            q = "Impacto del próximo CPI en Bitcoin y niveles clave"
+            st.session_state.chat_history.append(("Tú", q))
+            with st.spinner("IA pensando como trader pro..."):
+                respuesta = ia_explica(q)
+                st.session_state.chat_history.append(("AI", respuesta))
+            st.rerun()
+        if st.button("¿Qué está pasando con las whales en BNB?"):
+            q = "¿Qué está pasando con las whales en BNB?"
+            st.session_state.chat_history.append(("Tú", q))
+            with st.spinner("IA pensando como trader pro..."):
+                respuesta = ia_explica(q)
+                st.session_state.chat_history.append(("AI", respuesta))
+            st.rerun()
+        if st.button("Estrategia para SOL en las próximas 48h"):
+            q = "Estrategia para SOL en las próximas 48h con stop y target"
+            st.session_state.chat_history.append(("Tú", q))
+            with st.spinner("IA pensando como trader pro..."):
+                respuesta = ia_explica(q)
+                st.session_state.chat_history.append(("AI", respuesta))
+            st.rerun()
+
+    # Pregunta manual
     pregunta = st.text_input("O escribe tu propia pregunta:", placeholder="Ej: ¿Qué pasa si el DXY sube fuerte?")
     if st.button("Preguntar") and pregunta:
         st.session_state.chat_history.append(("Tú", pregunta))
         with st.spinner("IA pensando como trader pro..."):
             respuesta = ia_explica(pregunta)
             st.session_state.chat_history.append(("AI", respuesta))
+        st.rerun()
+
+    # Mostrar historial
     for role, mensaje in st.session_state.chat_history:
         if role == "Tú":
             st.markdown(f"**Tú:** {mensaje}")
         else:
             st.markdown(f"**🤖 AI Analyst:** {mensaje}")
+
     if st.button("🗑️ Limpiar historial"):
         st.session_state.chat_history = []
         st.rerun()

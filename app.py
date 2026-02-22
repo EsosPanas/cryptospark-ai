@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Precios cambian suavemente en tiempo real cada 6s")
+st.caption("BTC • ETH • SOL • BNB | Precios se mueven suavemente en tiempo real")
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
@@ -53,15 +53,7 @@ def get_historical_prices(coin_id="bitcoin", days=7):
     except:
         return pd.Series()
 
-def get_market_snapshot_text():
-    prices = get_prices()
-    return f"""
-**📊 SNAPSHOT EN TIEMPO REAL**
-• BTC ${prices.get('BTC',{}).get('price',0):,.0f}
-• ETH ${prices.get('ETH',{}).get('price',0):,.0f}
-• SOL ${prices.get('SOL',{}).get('price',0):,.0f}
-• BNB ${prices.get('BNB',{}).get('price',0):,.0f}
-"""
+# (mantengo las funciones ia_explica, get_onchain_metrics, process_ai_question iguales que antes)
 
 def ia_explica(texto):
     if not GROQ_API_KEY:
@@ -85,37 +77,47 @@ def process_ai_question(q):
         st.session_state.chat_history.append(("AI", respuesta))
     st.rerun()
 
-# ====================== PULSE VIVO - ACTUALIZACIÓN SUAVE ======================
+# ====================== PULSE VIVO - ACTUALIZACIÓN ULTRA SUAVE ======================
 if selected_tab == "📊 Pulse Vivo":
     st.subheader("📊 Pulse Vivo - Visión General para Traders")
-    st.caption("Precios que se mueven suavemente en tiempo real • Alto/Bajo/Volumen 24h")
+    st.caption("Precios que se mueven suavemente en tiempo real • Todo fluye sin parpadeo")
+
+    # Contenedor estable que nunca se recrea
+    price_container = st.empty()
 
     @st.fragment(run_every=6)
-    def pulse_live_smooth():
+    def pulse_live_ultra_smooth():
         prices = get_prices()
         cols = st.columns(4)
         mapping = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana", "BNB": "binancecoin"}
-        for i, sym in enumerate(["BTC", "ETH", "SOL", "BNB"]):
-            data = prices.get(sym, {"price": 0, "change": 0})
-            series = get_historical_prices(mapping[sym], days=7)
-            with cols[i]:
-                st.metric(
-                    label=f"**{sym}**",
-                    value=f"${data['price']:,.0f}" if data['price'] > 0 else "—",
-                    delta=f"{data['change']:+.2f}%",
-                    chart_data=series.tolist() if not series.empty else None
-                )
-                if data['price'] > 0:
-                    st.caption(f"**Alto 24h** ${data['high_24h']:,.0f}")
-                    st.caption(f"**Bajo 24h** ${data['low_24h']:,.0f}")
-                    st.caption(f"**Volumen 24h** ${data['volume']/1e9:.1f}B")
-    pulse_live_smooth()
+        
+        with price_container:
+            for i, sym in enumerate(["BTC", "ETH", "SOL", "BNB"]):
+                data = prices.get(sym, {"price": 0, "change": 0})
+                series = get_historical_prices(mapping[sym], days=7)
+                col = cols[i]
+                with col:
+                    st.metric(
+                        label=f"**{sym}**",
+                        value=f"${data['price']:,.0f}" if data['price'] > 0 else "—",
+                        delta=f"{data['change']:+.2f}%",
+                        chart_data=series.tolist() if not series.empty else None
+                    )
+                    if data['price'] > 0:
+                        st.caption(f"**Alto 24h** ${data['high_24h']:,.0f}")
+                        st.caption(f"**Bajo 24h** ${data['low_24h']:,.0f}")
+                        st.caption(f"**Volumen 24h** ${data['volume']/1e9:.1f}B")
+    pulse_live_ultra_smooth()
 
 # ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
 else:
-    st.subheader(selected_tab)
-    st.info("Esta pestaña se pulirá en el siguiente paso (dime 'siguiente' cuando estés listo)")
+    if selected_tab == "🤖 AI Analyst":
+        st.subheader("🤖 AI Analyst")
+        st.info("Pulse Vivo ya está pulido. Dime 'siguiente' cuando quieras pulir esta pestaña.")
+    else:
+        st.subheader(selected_tab)
+        st.info("Esta pestaña se pulirá en el siguiente paso.")
 
 # ====================== FOOTER ======================
 st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
-st.success("✅ CryptoSpark AI 100% tuya • Pulse Vivo con actualización suave y natural")
+st.success("✅ CryptoSpark AI 100% tuya • Pulse Vivo con actualización ultra suave")

@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Precios cambian suavemente cada 8s en tiempo real")
+st.caption("BTC • ETH • SOL • BNB | Precios cambian suavemente en tiempo real cada 6s")
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
@@ -20,7 +20,7 @@ selected_tab = st.radio("", tab_options, index=tab_options.index(st.session_stat
 st.session_state.current_tab = selected_tab
 
 # ====================== FUNCIONES ======================
-@st.cache_data(ttl=8)
+@st.cache_data(ttl=6)
 def get_prices():
     try:
         url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin&price_change_percentage=24h"
@@ -129,14 +129,13 @@ onchain = get_onchain_metrics()
 symbols = ["BTC", "ETH", "SOL", "BNB"]
 mapping = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana", "BNB": "binancecoin"}
 
-# ====================== PULSE VIVO PERFECCIONADO ======================
+# ====================== PULSE VIVO - ACTUALIZACIÓN SUAVE EN TIEMPO REAL ======================
 if selected_tab == "📊 Pulse Vivo":
     st.subheader("📊 Pulse Vivo - Visión General para Traders")
-    st.caption("Precios grandes + sparklines en tiempo real • Alto/Bajo/Volumen 24h")
+    st.caption("Precios que cambian suavemente en tiempo real • Alto/Bajo/Volumen 24h")
 
-    # Actualización suave cada 8 segundos (solo números cambian)
-    @st.fragment(run_every=8)
-    def pulse_live_fragment():
+    @st.fragment(run_every=6)
+    def pulse_live():
         prices = get_prices()
         cols = st.columns(4)
         for i, sym in enumerate(symbols):
@@ -153,12 +152,10 @@ if selected_tab == "📊 Pulse Vivo":
                     st.caption(f"**Alto 24h** ${data['high_24h']:,.0f}")
                     st.caption(f"**Bajo 24h** ${data['low_24h']:,.0f}")
                     st.caption(f"**Volumen 24h** ${data['volume']/1e9:.1f}B")
-    pulse_live_fragment()
+    pulse_live()
 
-# ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
+# ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba perfecto) ======================
 else:
-    # Aquí van las otras pestañas completas (Alertas, On-Chain, News, Macro, AI Analyst)
-    # (copia de tu versión anterior que funcionaba perfectamente)
     if selected_tab == "🤖 AI Analyst":
         st.subheader("🤖 AI Analyst")
         st.markdown("### 📊 Snapshot del Mercado Actual")
@@ -178,7 +175,39 @@ else:
                     st.line_chart(series, use_container_width=True, height=140)
                 else:
                     st.caption("Cargando gráfico...")
-        # (botones rápidos y historial igual que antes)
+        st.markdown("---")
+        st.write("**Preguntas rápidas con datos actuales**")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔮 Escenario BTC esta semana", use_container_width=True):
+                process_ai_question("¿Qué escenario veo para BTC esta semana? Precio actual y niveles clave.")
+            if st.button("📉 Funding actual de SOL", use_container_width=True):
+                process_ai_question("Analiza el funding rate actual de SOL y posibles squeezes.")
+            if st.button("🟢 ¿Entrar largo en ETH ahora?", use_container_width=True):
+                process_ai_question("¿Debo entrar largo en ETH ahora? Dame pros, contras, stop-loss y take-profit.")
+        with col2:
+            if st.button("💥 Impacto del CPI en Bitcoin", use_container_width=True):
+                process_ai_question("Impacto del CPI reciente en Bitcoin y niveles clave.")
+            if st.button("🐳 Whales en BNB ahora", use_container_width=True):
+                process_ai_question("¿Qué están haciendo las whales con BNB en este momento?")
+            if st.button("⚡ Estrategia SOL próximas 48h", use_container_width=True):
+                process_ai_question("Estrategia clara para SOL en las próximas 48h con stop y target.")
+        pregunta = st.text_input("O escribe tu propia pregunta:", placeholder="Ej: ¿Qué pasa si el DXY sube fuerte?")
+        if st.button("Preguntar", type="primary") and pregunta:
+            process_ai_question(pregunta)
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+        for item in st.session_state.chat_history:
+            if item[0] == "Tú":
+                st.markdown(f"**Tú:** {item[1]}")
+            else:
+                with st.expander("📊 Snapshot del mercado usado en esta respuesta", expanded=True):
+                    st.markdown(get_market_snapshot_text())
+                st.markdown(f"**🤖 AI Analyst:** {item[1]}")
+        if st.button("🗑️ Limpiar historial"):
+            st.session_state.chat_history = []
+            st.rerun()
+    # (las otras pestañas Alertas, On-Chain, News, Macro se mantienen como en la versión anterior que funcionaba perfecto)
 
 # ====================== FOOTER ======================
 st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")

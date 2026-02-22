@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Precios se mueven suavemente en tiempo real")
+st.caption("BTC • ETH • SOL • BNB | Precios fluyen suavemente en tiempo real")
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
@@ -53,7 +53,15 @@ def get_historical_prices(coin_id="bitcoin", days=7):
     except:
         return pd.Series()
 
-# (mantengo las funciones ia_explica, get_onchain_metrics, process_ai_question iguales que antes)
+def get_market_snapshot_text():
+    prices = get_prices()
+    return f"""
+**📊 SNAPSHOT EN TIEMPO REAL**
+• BTC ${prices.get('BTC',{}).get('price',0):,.0f}
+• ETH ${prices.get('ETH',{}).get('price',0):,.0f}
+• SOL ${prices.get('SOL',{}).get('price',0):,.0f}
+• BNB ${prices.get('BNB',{}).get('price',0):,.0f}
+"""
 
 def ia_explica(texto):
     if not GROQ_API_KEY:
@@ -77,47 +85,76 @@ def process_ai_question(q):
         st.session_state.chat_history.append(("AI", respuesta))
     st.rerun()
 
-# ====================== PULSE VIVO - ACTUALIZACIÓN ULTRA SUAVE ======================
+# ====================== PULSE VIVO - ACTUALIZACIÓN ULTRA SUAVE (HTML + CSS) ======================
 if selected_tab == "📊 Pulse Vivo":
     st.subheader("📊 Pulse Vivo - Visión General para Traders")
-    st.caption("Precios que se mueven suavemente en tiempo real • Todo fluye sin parpadeo")
+    st.caption("Precios que fluyen suavemente en tiempo real • Sin apagón • Todo se mantiene visible")
 
-    # Contenedor estable que nunca se recrea
+    # Contenedor estable (nunca se recrea)
     price_container = st.empty()
 
     @st.fragment(run_every=6)
-    def pulse_live_ultra_smooth():
+    def smooth_price_ticker():
         prices = get_prices()
-        cols = st.columns(4)
-        mapping = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana", "BNB": "binancecoin"}
-        
-        with price_container:
-            for i, sym in enumerate(["BTC", "ETH", "SOL", "BNB"]):
-                data = prices.get(sym, {"price": 0, "change": 0})
-                series = get_historical_prices(mapping[sym], days=7)
-                col = cols[i]
-                with col:
-                    st.metric(
-                        label=f"**{sym}**",
-                        value=f"${data['price']:,.0f}" if data['price'] > 0 else "—",
-                        delta=f"{data['change']:+.2f}%",
-                        chart_data=series.tolist() if not series.empty else None
-                    )
-                    if data['price'] > 0:
-                        st.caption(f"**Alto 24h** ${data['high_24h']:,.0f}")
-                        st.caption(f"**Bajo 24h** ${data['low_24h']:,.0f}")
-                        st.caption(f"**Volumen 24h** ${data['volume']/1e9:.1f}B")
-    pulse_live_ultra_smooth()
+        html = """
+        <style>
+        .ticker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .ticker-card {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 1px solid #333;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .ticker-card.up { border-color: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.25); }
+        .ticker-card.down { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,0.25); }
+        .symbol { color: #aaa; font-size: 0.95rem; margin-bottom: 6px; }
+        .price {
+            font-size: 1.85rem;
+            font-weight: bold;
+            margin: 8px 0;
+            transition: color 0.6s ease;
+        }
+        .change {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        </style>
+        <div class="ticker-grid">
+        """
+        symbols = ["BTC", "ETH", "SOL", "BNB"]
+        for sym in symbols:
+            data = prices.get(sym, {"price": 0, "change": 0})
+            direction = "up" if data['change'] >= 0 else "down"
+            color = "#22c55e" if data['change'] >= 0 else "#ef4444"
+            
+            html += f"""
+            <div class="ticker-card {direction}">
+                <div class="symbol">{sym}</div>
+                <div class="price" style="color:{color};">${data['price']:,.0f}</div>
+                <div class="change" style="color:{color};">{data['change']:+.2f}%</div>
+            </div>
+            """
+        html += "</div>"
+        price_container.markdown(html, unsafe_allow_html=True)
+
+    smooth_price_ticker()
 
 # ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
 else:
     if selected_tab == "🤖 AI Analyst":
         st.subheader("🤖 AI Analyst")
-        st.info("Pulse Vivo ya está pulido. Dime 'siguiente' cuando quieras pulir esta pestaña.")
+        st.info("Pulse Vivo ya está perfecto. Dime 'siguiente' cuando quieras pulir esta pestaña.")
     else:
         st.subheader(selected_tab)
         st.info("Esta pestaña se pulirá en el siguiente paso.")
 
 # ====================== FOOTER ======================
 st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
-st.success("✅ CryptoSpark AI 100% tuya • Pulse Vivo con actualización ultra suave")
+st.success("✅ CryptoSpark AI 100% tuya • Pulse Vivo con flujo suave y natural")

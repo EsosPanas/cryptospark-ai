@@ -75,7 +75,7 @@ def process_ai_question(q):
         st.session_state.chat_history.append(("AI", respuesta))
     st.rerun()
 
-# ====================== PULSE VIVO - TICKER SUAVE SIN PARPADEO ======================
+# ====================== PULSE VIVO - TICKER SUAVE (HTML + CSS) ======================
 if selected_tab == "📊 Pulse Vivo":
     st.subheader("📊 Pulse Vivo - Visión General para Traders")
     st.caption("Precios que fluyen suavemente • Sin apagón • Todo se mantiene visible")
@@ -88,13 +88,13 @@ if selected_tab == "📊 Pulse Vivo":
         prices = get_prices()
         html = """
         <style>
-        .ticker {
+        .ticker-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin: 20px 0;
         }
-        .card {
+        .ticker-card {
             background: #1e1e2e;
             border-radius: 12px;
             padding: 20px 12px;
@@ -102,13 +102,18 @@ if selected_tab == "📊 Pulse Vivo":
             border: 1px solid #333;
             transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .card.up { border-color: #22c55e; box-shadow: 0 0 15px rgba(34,197,94,0.3); }
-        .card.down { border-color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.3); }
+        .ticker-card.up { border-color: #22c55e; box-shadow: 0 0 15px rgba(34,197,94,0.3); }
+        .ticker-card.down { border-color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.3); }
         .symbol { color: #aaa; font-size: 0.95rem; margin-bottom: 8px; }
-        .price { font-size: 1.9rem; font-weight: bold; margin: 8px 0; transition: color 0.6s ease; }
+        .price { 
+            font-size: 1.9rem; 
+            font-weight: bold; 
+            margin: 8px 0; 
+            transition: color 0.6s ease;
+        }
         .change { font-weight: 600; font-size: 1.15rem; }
         </style>
-        <div class="ticker">
+        <div class="ticker-grid">
         """
 
         for sym in ["BTC", "ETH", "SOL", "BNB"]:
@@ -116,23 +121,22 @@ if selected_tab == "📊 Pulse Vivo":
             direction = "up" if data['change'] >= 0 else "down"
             color = "#22c55e" if data['change'] >= 0 else "#ef4444"
             html += f"""
-            <div class="card {direction}">
+            <div class="ticker-card {direction}">
                 <div class="symbol">{sym}</div>
                 <div class="price" style="color:{color};">${data['price']:,.0f}</div>
                 <div class="change" style="color:{color};">{data['change']:+.2f}%</div>
             </div>
             """
-
         html += "</div>"
         ticker_container.markdown(html, unsafe_allow_html=True)
 
     smooth_ticker()
 
-# ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
+# ====================== OTRAS PESTAÑAS ======================
 else:
     if selected_tab == "🤖 AI Analyst":
         st.subheader("🤖 AI Analyst")
-        st.info("Pulse Vivo ya está perfecto con actualización suave. Dime 'siguiente' cuando quieras pulir esta pestaña.")
+        st.info("Pulse Vivo ya está perfecto. Dime 'siguiente' cuando quieras pulir esta pestaña.")
     else:
         st.subheader(selected_tab)
         st.info("Esta pestaña se pulirá en el siguiente paso.")

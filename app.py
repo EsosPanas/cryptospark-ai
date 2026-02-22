@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Precios cambian suavemente en tiempo real")
+st.caption("BTC • ETH • SOL • BNB | Precios fluyen suavemente en tiempo real")
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
@@ -84,7 +84,7 @@ if selected_tab == "📊 Pulse Vivo":
     pulse_container = st.empty()
 
     @st.fragment(run_every=6)
-    def pulse_live_smooth():
+    def pulse_live():
         prices = get_prices()
         cols = st.columns(4)
         mapping = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana", "BNB": "binancecoin"}
@@ -104,7 +104,7 @@ if selected_tab == "📊 Pulse Vivo":
                         st.caption(f"**Alto 24h** ${data['high_24h']:,.0f}")
                         st.caption(f"**Bajo 24h** ${data['low_24h']:,.0f}")
                         st.caption(f"**Volumen 24h** ${data['volume']/1e9:.1f}B")
-    pulse_live_smooth()
+    pulse_live()
 
 # ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
 else:

@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(page_title="CryptoSpark AI", layout="wide")
 
 st.title("🚀 CryptoSpark AI - Tu Sala de Control Trader")
-st.caption("BTC • ETH • SOL • BNB | Precios fluyen suavemente en tiempo real")
+st.caption("BTC • ETH • SOL • BNB | Precios cambian suavemente en tiempo real")
 
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 
@@ -53,72 +53,68 @@ def get_historical_prices(coin_id="bitcoin", days=7):
     except:
         return pd.Series()
 
-# ====================== PULSE VIVO - TICKER BONITO Y SUAVE ======================
+def ia_explica(texto):
+    if not GROQ_API_KEY:
+        return "⚠️ Agrega tu clave Groq en Secrets para activar IA"
+    prices = get_prices()
+    market_snapshot = f"DATOS ACTUALES: BTC ${prices.get('BTC',{}).get('price',0):,.0f} | ETH ${prices.get('ETH',{}).get('price',0):,.0f} | SOL ${prices.get('SOL',{}).get('price',0):,.0f} | BNB ${prices.get('BNB',{}).get('price',0):,.0f}"
+    prompt = f"Eres trader pro. Usa estos datos: {market_snapshot}\nPregunta: {texto}"
+    try:
+        r = requests.post("https://api.groq.com/openai/v1/chat/completions", 
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "max_tokens": 900},
+            timeout=15)
+        return r.json()["choices"][0]["message"]["content"]
+    except:
+        return "Error temporal en IA"
+
+def process_ai_question(q):
+    st.session_state.chat_history.append(("Tú", q))
+    with st.spinner("IA analizando..."):
+        respuesta = ia_explica(q)
+        st.session_state.chat_history.append(("AI", respuesta))
+    st.rerun()
+
+# ====================== PULSE VIVO - ACTUALIZACIÓN SUAVE Y ESTABLE ======================
 if selected_tab == "📊 Pulse Vivo":
     st.subheader("📊 Pulse Vivo - Visión General para Traders")
     st.caption("Precios que fluyen suavemente • Sin apagón • Todo se mantiene visible")
 
-    # Contenedor estable
-    ticker_container = st.empty()
+    # Contenedor estable que nunca se borra
+    pulse_container = st.empty()
 
     @st.fragment(run_every=6)
-    def smooth_ticker():
+    def pulse_live_smooth():
         prices = get_prices()
-        html = """
-        <style>
-        .ticker-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin: 20px 0;
-        }
-        .ticker-card {
-            background: #1e1e2e;
-            border-radius: 12px;
-            padding: 20px 12px;
-            text-align: center;
-            border: 1px solid #333;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .ticker-card.up { border-color: #22c55e; box-shadow: 0 0 15px rgba(34,197,94,0.3); }
-        .ticker-card.down { border-color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.3); }
-        .symbol { color: #aaa; font-size: 0.95rem; margin-bottom: 8px; }
-        .price { 
-            font-size: 1.9rem; 
-            font-weight: bold; 
-            margin: 8px 0; 
-            transition: color 0.6s ease;
-        }
-        .change { font-weight: 600; font-size: 1.15rem; }
-        </style>
-        <div class="ticker-grid">
-        """
-
-        for sym in ["BTC", "ETH", "SOL", "BNB"]:
-            data = prices.get(sym, {"price": 0, "change": 0})
-            direction = "up" if data['change'] >= 0 else "down"
-            color = "#22c55e" if data['change'] >= 0 else "#ef4444"
-            html += f"""
-            <div class="ticker-card {direction}">
-                <div class="symbol">{sym}</div>
-                <div class="price" style="color:{color};">${data['price']:,.0f}</div>
-                <div class="change" style="color:{color};">{data['change']:+.2f}%</div>
-            </div>
-            """
-        html += "</div>"
-        ticker_container.html(html)   # ← Aquí está la solución definitiva
-
-    smooth_ticker()
+        cols = st.columns(4)
+        mapping = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana", "BNB": "binancecoin"}
+        
+        with pulse_container:
+            for i, sym in enumerate(["BTC", "ETH", "SOL", "BNB"]):
+                data = prices.get(sym, {"price": 0, "change": 0})
+                series = get_historical_prices(mapping[sym], days=7)
+                with cols[i]:
+                    st.metric(
+                        label=f"**{sym}**",
+                        value=f"${data['price']:,.0f}" if data['price'] > 0 else "—",
+                        delta=f"{data['change']:+.2f}%",
+                        chart_data=series.tolist() if not series.empty else None
+                    )
+                    if data['price'] > 0:
+                        st.caption(f"**Alto 24h** ${data['high_24h']:,.0f}")
+                        st.caption(f"**Bajo 24h** ${data['low_24h']:,.0f}")
+                        st.caption(f"**Volumen 24h** ${data['volume']/1e9:.1f}B")
+    pulse_live_smooth()
 
 # ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
 else:
     if selected_tab == "🤖 AI Analyst":
         st.subheader("🤖 AI Analyst")
-        st.info("Pulse Vivo ya está perfecto con flujo suave. Dime 'siguiente' cuando quieras pulir esta pestaña.")
+        st.info("Pulse Vivo ya está perfecto. Dime 'siguiente' cuando quieras pulir esta pestaña.")
     else:
         st.subheader(selected_tab)
         st.info("Esta pestaña se pulirá en el siguiente paso.")
 
 # ====================== FOOTER ======================
 st.caption(f"Última actualización: {datetime.now().strftime('%H:%M:%S')}")
-st.success("✅ CryptoSpark AI 100% tuya • Precios fluyen suavemente sin apagón")
+st.success("✅ CryptoSpark AI 100% tuya • Pulse Vivo con flujo suave y natural")

@@ -53,34 +53,12 @@ def get_historical_prices(coin_id="bitcoin", days=7):
     except:
         return pd.Series()
 
-def ia_explica(texto):
-    if not GROQ_API_KEY:
-        return "⚠️ Agrega tu clave Groq en Secrets para activar IA"
-    prices = get_prices()
-    market_snapshot = f"DATOS ACTUALES: BTC ${prices.get('BTC',{}).get('price',0):,.0f} | ETH ${prices.get('ETH',{}).get('price',0):,.0f} | SOL ${prices.get('SOL',{}).get('price',0):,.0f} | BNB ${prices.get('BNB',{}).get('price',0):,.0f}"
-    prompt = f"Eres trader pro. Usa estos datos: {market_snapshot}\nPregunta: {texto}"
-    try:
-        r = requests.post("https://api.groq.com/openai/v1/chat/completions", 
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}], "max_tokens": 900},
-            timeout=15)
-        return r.json()["choices"][0]["message"]["content"]
-    except:
-        return "Error temporal en IA"
-
-def process_ai_question(q):
-    st.session_state.chat_history.append(("Tú", q))
-    with st.spinner("IA analizando..."):
-        respuesta = ia_explica(q)
-        st.session_state.chat_history.append(("AI", respuesta))
-    st.rerun()
-
-# ====================== PULSE VIVO - TICKER SUAVE (HTML + CSS) ======================
+# ====================== PULSE VIVO - TICKER BONITO Y SUAVE ======================
 if selected_tab == "📊 Pulse Vivo":
     st.subheader("📊 Pulse Vivo - Visión General para Traders")
     st.caption("Precios que fluyen suavemente • Sin apagón • Todo se mantiene visible")
 
-    # Contenedor estable que nunca se borra
+    # Contenedor estable
     ticker_container = st.empty()
 
     @st.fragment(run_every=6)
@@ -128,7 +106,7 @@ if selected_tab == "📊 Pulse Vivo":
             </div>
             """
         html += "</div>"
-        ticker_container.markdown(html, unsafe_allow_html=True)
+        ticker_container.html(html)   # ← Aquí está la solución definitiva
 
     smooth_ticker()
 
@@ -136,7 +114,7 @@ if selected_tab == "📊 Pulse Vivo":
 else:
     if selected_tab == "🤖 AI Analyst":
         st.subheader("🤖 AI Analyst")
-        st.info("Pulse Vivo ya está perfecto. Dime 'siguiente' cuando quieras pulir esta pestaña.")
+        st.info("Pulse Vivo ya está perfecto con flujo suave. Dime 'siguiente' cuando quieras pulir esta pestaña.")
     else:
         st.subheader(selected_tab)
         st.info("Esta pestaña se pulirá en el siguiente paso.")

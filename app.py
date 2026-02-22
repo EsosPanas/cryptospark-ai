@@ -132,7 +132,7 @@ if selected_tab == "📊 Pulse Vivo":
 
     smooth_ticker()
 
-# ====================== OTRAS PESTAÑAS ======================
+# ====================== OTRAS PESTAÑAS (mantengo todo lo que ya funcionaba) ======================
 else:
     if selected_tab == "🤖 AI Analyst":
         st.subheader("🤖 AI Analyst")
